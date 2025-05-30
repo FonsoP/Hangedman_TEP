@@ -66,8 +66,10 @@ jugarTurno palabra actual intentos letrasUsadas  = do
         then do
             putStrLn "\n¡Te has quedado sin intentos!"
             putStrLn $ "La palabra era: " ++ palabra
-
-            
+      
+            putStrLn "Presione Enter para volver al menú principal..."
+            _ <- getLine
+            return ()
         else if actual == palabra
             then do
                 putStrLn "\n¡Felicidades! ¡Has ganado!"
@@ -107,15 +109,19 @@ jugarTurno palabra actual intentos letrasUsadas  = do
 
 leerEstadisticas :: IO (Int, Int, Int)
 leerEstadisticas = do
-    existe <- doesFileExist "src/estadisticas.txt"
+    existe <- doesFileExist "estadisticas.txt"
     if existe
         then do
-            contenido <- readFile "src/estadisticas.txt"
+            contenido <- readFile "estadisticas.txt"
             let lineas = lines contenido
             if length lineas >= 3
                 then return (read (head lineas), read (lineas !! 1), read (lineas !! 2))
-                else return (0, 0, 0)
-        else return (0, 0, 0)
+                else do
+                    writeFile "estadisticas.txt" "0\n0\n0"
+                    return (0, 0, 0)
+        else do
+            writeFile "estadisticas.txt" "0\n0\n0"
+            return (0, 0, 0)
 
 visualizarEstadisticas :: IO ()
 visualizarEstadisticas = do
