@@ -1,0 +1,2 @@
+Haskell
+Este es un juego del ahorcado
