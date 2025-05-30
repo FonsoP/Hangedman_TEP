@@ -6,7 +6,6 @@ import System.Process
 import System.Info
 import GHC.Show (Show(show))
 import System.Random
-import System.Console.ANSI
 
 revelarLetra :: String -> String -> Char -> String
 revelarLetra palabra actual letra = 
@@ -43,8 +42,10 @@ jugarPartida = do
     palabraElegida <- return $ map toUpper (palabrasList !! indrndm)
     jugarConPalabras palabraElegida
 
-jugarConPalabras :: String -> IO ()
+escribir :: String -> String
+escribir palabra = replicate (length palabra) '_'
 
+jugarConPalabras :: String -> IO ()
 jugarConPalabras palabra = do
     let palabraOculta = escribir palabra
     let intentos = 6
@@ -55,7 +56,7 @@ jugarConPalabras palabra = do
     putStrLn $ "Palabra: " ++ palabraOculta
     putStrLn $ "Intentos restantes: " ++ show intentos
     
-    jugarTurno palabra palabraOculta intentos letrasUsadas 
+    jugarTurno palabra palabraOculta intentos letrasUsadas []
 
 actualizarEstadisticas :: Bool -> IO ()
 actualizarEstadisticas esVictoria = do
@@ -139,13 +140,11 @@ jugarTurno palabra actual intentos letrasUsadas restoPalabras = do
     dibujarAhorcado intentos
     if intentos <= 0
         then do
-            setSGR [SetColor Foreground Vivid Red]
             putStrLn "\n¡Te has quedado sin intentos!"
             putStrLn $ "La palabra era: " ++ palabra
             
             putStrLn "Presione Enter para volver al menú principal..."
             _ <- getLine
-            setSGR [Reset]
             return ()
         else if actual == palabra
             then do
@@ -153,7 +152,6 @@ jugarTurno palabra actual intentos letrasUsadas restoPalabras = do
                 putStrLn $ "La palabra era: " ++ palabra
                 _ <- getLine
                 return ()
-                
             else do
                 putStrLn "\nDí una letra: "
                 letra <- getLine
