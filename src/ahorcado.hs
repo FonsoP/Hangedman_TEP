@@ -44,7 +44,7 @@ jugarPartida = do
 jugarConPalabras :: [String] -> IO ()
 jugarConPalabras [] = do
     putStrLn "\n¡Has completado todas las palabras!"
-    putStrLn "Presione Enter para continuar..."
+    putStrLn "Presione Enter para volver al menú principal..."
     _ <- getLine
     return ()
 jugarConPalabras (palabra:resto) = do
@@ -59,19 +59,29 @@ jugarConPalabras (palabra:resto) = do
     
     jugarTurno palabra palabraOculta intentos letrasUsadas resto
 
+actualizarEstadisticas :: Bool -> IO ()
+actualizarEstadisticas esVictoria = do
+    (ganadas, perdidas, abandonadas) <- leerEstadisticas
+    let (ganadas', perdidas', abandonadas') = if esVictoria 
+                                            then (ganadas + 1, perdidas, abandonadas)
+                                            else (ganadas, perdidas + 1, abandonadas)
+    writeFile "estadisticas.txt" $ unlines $ map show [ganadas', perdidas', abandonadas']
+
 jugarTurno :: String -> String -> Int -> [Char] -> [String] -> IO ()
 jugarTurno palabra actual intentos letrasUsadas restoPalabras = do
     if intentos <= 0
         then do
             putStrLn "\n¡Te has quedado sin intentos!"
             putStrLn $ "La palabra era: " ++ palabra
-            putStrLn "Presione Enter para continuar con la siguiente palabra..."
+            actualizarEstadisticas False
+            putStrLn "Presione Enter para volver al menú principal..."
             _ <- getLine
-            jugarConPalabras restoPalabras
+            return ()
         else if actual == palabra
             then do
                 putStrLn "\n¡Felicidades! ¡Has ganado!"
                 putStrLn $ "La palabra era: " ++ palabra
+                actualizarEstadisticas True
                 putStrLn "Presione Enter para continuar con la siguiente palabra..."
                 _ <- getLine
                 jugarConPalabras restoPalabras
@@ -108,15 +118,19 @@ jugarTurno palabra actual intentos letrasUsadas restoPalabras = do
 
 leerEstadisticas :: IO (Int, Int, Int)
 leerEstadisticas = do
-    existe <- doesFileExist "src/estadisticas.txt"
+    existe <- doesFileExist "estadisticas.txt"
     if existe
         then do
-            contenido <- readFile "src/estadisticas.txt"
+            contenido <- readFile "estadisticas.txt"
             let lineas = lines contenido
             if length lineas >= 3
                 then return (read (head lineas), read (lineas !! 1), read (lineas !! 2))
-                else return (0, 0, 0)
-        else return (0, 0, 0)
+                else do
+                    writeFile "estadisticas.txt" "0\n0\n0"
+                    return (0, 0, 0)
+        else do
+            writeFile "estadisticas.txt" "0\n0\n0"
+            return (0, 0, 0)
 
 visualizarEstadisticas :: IO ()
 visualizarEstadisticas = do
