@@ -99,7 +99,8 @@ main = do
                     _ <- getLine
                     return ()
                 _ -> do
-                    putStrLn "\n❌ Opción no válida. Por favor seleccione un número del 1 al 3."
+                    limpiarPantalla
+                    putStrLn "Opción no válida. Por favor seleccione un número del 1 al 3."
                     putStrLn "Presione Enter para continuar..."
                     _ <- getLine
                     loop
