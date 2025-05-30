@@ -76,30 +76,34 @@ jugarTurno palabra actual intentos letrasUsadas restoPalabras = do
                 _ <- getLine
                 jugarConPalabras restoPalabras
             else do
-                putStrLn "\n tu numero de intentos disponibles es: " ++ show intentos
                 putStrLn "\nDí una letra: "
                 letra <- getLine
                 let letraChar = toLower (head letra)
                 
                 if letraChar `elem` map toLower letrasUsadas
                     then do
+                        limpiarPantalla
                         putStrLn "¡Ya has usado esa letra!"
                         jugarTurno palabra actual intentos letrasUsadas restoPalabras
                     else if letraChar `elem` map toLower palabra
                         then do
+                            limpiarPantalla
                             let nuevaActual = revelarLetra palabra actual letraChar
                             let nuevasLetrasUsadas = letraChar : letrasUsadas
                             putStrLn $ "¡Correcto! La letra está en la palabra."
                             putStrLn $ "Palabra: " ++ nuevaActual
                             putStrLn $ "Intentos restantes: " ++ show intentos
-                            putStrLn $ "Letras usadas: " ++ show nuevasLetrasUsadas
+                            let letrasIncorrectas = filter (\l -> not (l `elem` map toLower palabra)) nuevasLetrasUsadas
+                            putStrLn $ "letras incorrectas: [" ++ intercalate ", " (map (:[]) letrasIncorrectas) ++ "]"
                             jugarTurno palabra nuevaActual intentos nuevasLetrasUsadas restoPalabras
                         else do
+                            limpiarPantalla
                             let nuevasLetrasUsadas = letraChar : letrasUsadas
                             putStrLn "¡Incorrecto! La letra no está en la palabra."
                             putStrLn $ "Palabra: " ++ actual
                             putStrLn $ "Intentos restantes: " ++ show (intentos - 1)
-                            putStrLn $ "Letras usadas: " ++ show nuevasLetrasUsadas
+                            let letrasIncorrectas = filter (\l -> not (l `elem` map toLower palabra)) nuevasLetrasUsadas
+                            putStrLn $ "letras incorrectas: [" ++ intercalate ", " (map (:[]) letrasIncorrectas) ++ "]"
                             jugarTurno palabra actual (intentos - 1) nuevasLetrasUsadas restoPalabras
 
 leerEstadisticas :: IO (Int, Int, Int)
