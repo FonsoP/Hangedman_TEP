@@ -8,6 +8,68 @@ import GHC.Show (Show(show))
 import System.Random
 
 
+
+dibujarAhorcado :: Int -> IO ()
+dibujarAhorcado intentos = do
+    case intentos of
+        6 -> do
+            putStrLn "\n  +---+"
+            putStrLn "  |   |"
+            putStrLn "      |"
+            putStrLn "      |"
+            putStrLn "      |"
+            putStrLn "      |"
+            putStrLn "========="
+        5 -> do
+            putStrLn "\n  +---+"
+            putStrLn "  |   |"
+            putStrLn "  O   |"
+            putStrLn "      |"
+            putStrLn "      |"
+            putStrLn "      |"
+            putStrLn "========="
+        4 -> do
+            putStrLn "\n  +---+"
+            putStrLn "  |   |"
+            putStrLn "  O   |"
+            putStrLn "  |   |"
+            putStrLn "      |"
+            putStrLn "      |"
+            putStrLn "========="
+        3 -> do
+            putStrLn "\n  +---+"
+            putStrLn "  |   |"
+            putStrLn "  O   |"
+            putStrLn " /|   |"
+            putStrLn "      |"
+            putStrLn "      |"
+            putStrLn "========="
+        2 -> do
+            putStrLn "\n  +---+"
+            putStrLn "  |   |"
+            putStrLn "  O   |"
+            putStrLn " /|\\  |"
+            putStrLn "      |"
+            putStrLn "      |"
+            putStrLn "========="
+        1 -> do
+            putStrLn "\n  +---+"
+            putStrLn "  |   |"
+            putStrLn "  O   |"
+            putStrLn " /|\\  |"
+            putStrLn " /    |"
+            putStrLn "      |"
+            putStrLn "========="
+        0 -> do
+            putStrLn "\n  +---+"
+            putStrLn "  |   |"
+            putStrLn "  O   |"
+            putStrLn " /|\\  |"
+            putStrLn " / \\  |"
+            putStrLn "      |"
+            putStrLn "========="
+        _ -> return ()
+
 escribir :: String -> String
 escribir palabra = replicate (length palabra) '_'
 
@@ -62,6 +124,7 @@ jugarConPalabras palabra = do
 
 jugarTurno :: String -> String -> Int -> [Char]  -> IO ()
 jugarTurno palabra actual intentos letrasUsadas  = do
+    dibujarAhorcado intentos
     if intentos <= 0
         then do
             putStrLn "\n¡Te has quedado sin intentos!"
