@@ -3,6 +3,10 @@ import Data.Char
 import Data.List
 import System.Directory
 
+concatenar :: String -> String -> String
+
+concatenar letras nueva = if letras == "" then [head nueva]
+    else letras ++  " , " ++ [head nueva] 
 
 -- crea la palabra cubierta con guiones bajos
 cubrir :: String -> String
@@ -27,8 +31,8 @@ procesarLetra palabra cubierta letra =
 
 
 
-jugar :: Int -> String -> String -> IO ()
-jugar intentos palabraElegida cubierta = do
+jugar :: Int -> String -> String -> String -> IO ()
+jugar intentos palabraElegida cubierta letras= do
     putStrLn "Palabra cubierta: "
     putStrLn cubierta
 
@@ -37,7 +41,9 @@ jugar intentos palabraElegida cubierta = do
     letra <- getLine
 
     let nuevaCubierta = procesarLetra palabraElegida cubierta (head letra)
- 
+    
+    let letras2 = concatenar letras letra
+
     if nuevaCubierta == cubierta then do
         putStrLn "Letra incorrecta."
     else do
@@ -49,7 +55,8 @@ jugar intentos palabraElegida cubierta = do
 
         if intentos > 1 then do
             putStrLn $ "Intentos restantes: " ++ show (intentos - 1)
-            jugar (intentos - 1) palabraElegida nuevaCubierta
+            putStrLn $ "Letras usadas: " ++ letras2
+            jugar (intentos - 1) palabraElegida nuevaCubierta letras2
         else do
             putStrLn "Has perdido, no te quedan intentos."
 
@@ -75,7 +82,7 @@ main = do
     let cubierta =  cubrir palabraElegida
     let intentos = length palabraElegida + 2
 
-    jugar intentos palabraElegida cubierta
+    jugar intentos palabraElegida cubierta ""
 
     -- cerrar el archivo
     hClose handle
