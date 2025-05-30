@@ -1,0 +1,16 @@
+# Archivos de compilación
+*.hi
+*.o
+*.exe
+dist-newstyle/
+.stack-work/
+
+# Archivos de configuración de Stack
+stack.yaml.lock
+
+# Archivos de estadísticas del juego
+estadisticas.txt
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db 

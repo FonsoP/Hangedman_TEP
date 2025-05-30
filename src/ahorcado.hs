@@ -5,6 +5,7 @@ import System.Directory
 import System.Process
 import System.Info
 import GHC.Show (Show(show))
+import Control.Concurrent (threadDelay)
 
 escribir :: String -> String
 escribir palabra = replicate (length palabra) '_'
@@ -67,8 +68,78 @@ actualizarEstadisticas esVictoria = do
                                             else (ganadas, perdidas + 1, abandonadas)
     writeFile "estadisticas.txt" $ unlines $ map show [ganadas', perdidas', abandonadas']
 
+dibujarAhorcado :: Int -> IO ()
+dibujarAhorcado intentos = do
+    case intentos of
+        6 -> do
+            putStrLn "\n  +---+"
+            putStrLn "  |   |"
+            putStrLn "      |"
+            putStrLn "      |"
+            putStrLn "      |"
+            putStrLn "      |"
+            putStrLn "========="
+        5 -> do
+            putStrLn "\n  +---+"
+            putStrLn "  |   |"
+            putStrLn "  O   |"
+            putStrLn "      |"
+            putStrLn "      |"
+            putStrLn "      |"
+            putStrLn "========="
+        4 -> do
+            putStrLn "\n  +---+"
+            putStrLn "  |   |"
+            putStrLn "  O   |"
+            putStrLn "  |   |"
+            putStrLn "      |"
+            putStrLn "      |"
+            putStrLn "========="
+        3 -> do
+            putStrLn "\n  +---+"
+            putStrLn "  |   |"
+            putStrLn "  O   |"
+            putStrLn " /|   |"
+            putStrLn "      |"
+            putStrLn "      |"
+            putStrLn "========="
+        2 -> do
+            putStrLn "\n  +---+"
+            putStrLn "  |   |"
+            putStrLn "  O   |"
+            putStrLn " /|\\  |"
+            putStrLn "      |"
+            putStrLn "      |"
+            putStrLn "========="
+        1 -> do
+            putStrLn "\n  +---+"
+            putStrLn "  |   |"
+            putStrLn "  O   |"
+            putStrLn " /|\\  |"
+            putStrLn " /    |"
+            putStrLn "      |"
+            putStrLn "========="
+        0 -> do
+            putStrLn "\n  +---+"
+            putStrLn "  |   |"
+            putStrLn "  O   |"
+            putStrLn " /|\\  |"
+            putStrLn " / \\  |"
+            putStrLn "      |"
+            putStrLn "========="
+        _ -> return ()
+
+-- Sonidos por consola
+sonidoFallo :: IO ()
+sonidoFallo = putStr "\a" >> hFlush stdout
+
+-- Función auxiliar para validar que la entrada sea una sola letra
+validarEntrada :: String -> Bool
+validarEntrada entrada = length entrada == 1 && isLetter (head entrada)
+
 jugarTurno :: String -> String -> Int -> [Char] -> [String] -> IO ()
 jugarTurno palabra actual intentos letrasUsadas restoPalabras = do
+    dibujarAhorcado intentos
     if intentos <= 0
         then do
             putStrLn "\n¡Te has quedado sin intentos!"
@@ -88,33 +159,40 @@ jugarTurno palabra actual intentos letrasUsadas restoPalabras = do
             else do
                 putStrLn "\nDí una letra: "
                 letra <- getLine
-                let letraChar = toLower (head letra)
-                
-                if letraChar `elem` map toLower letrasUsadas
+                if not (validarEntrada letra)
                     then do
                         limpiarPantalla
-                        putStrLn "¡Ya has usado esa letra!"
+                        putStrLn "Error: Por favor ingrese UNA SOLA letra válida."
+                        putStrLn "No se permiten números, espacios ni caracteres especiales."
                         jugarTurno palabra actual intentos letrasUsadas restoPalabras
-                    else if letraChar `elem` map toLower palabra
-                        then do
-                            limpiarPantalla
-                            let nuevaActual = revelarLetra palabra actual letraChar
-                            let nuevasLetrasUsadas = letraChar : letrasUsadas
-                            putStrLn $ "¡Correcto! La letra está en la palabra."
-                            putStrLn $ "Palabra: " ++ nuevaActual
-                            putStrLn $ "Intentos restantes: " ++ show intentos
-                            let letrasIncorrectas = filter (\l -> not (l `elem` map toLower palabra)) nuevasLetrasUsadas
-                            putStrLn $ "letras incorrectas: [" ++ intercalate ", " (map (:[]) letrasIncorrectas) ++ "]"
-                            jugarTurno palabra nuevaActual intentos nuevasLetrasUsadas restoPalabras
-                        else do
-                            limpiarPantalla
-                            let nuevasLetrasUsadas = letraChar : letrasUsadas
-                            putStrLn "¡Incorrecto! La letra no está en la palabra."
-                            putStrLn $ "Palabra: " ++ actual
-                            putStrLn $ "Intentos restantes: " ++ show (intentos - 1)
-                            let letrasIncorrectas = filter (\l -> not (l `elem` map toLower palabra)) nuevasLetrasUsadas
-                            putStrLn $ "letras incorrectas: [" ++ intercalate ", " (map (:[]) letrasIncorrectas) ++ "]"
-                            jugarTurno palabra actual (intentos - 1) nuevasLetrasUsadas restoPalabras
+                    else do
+                        let letraChar = toLower (head letra)
+                        if letraChar `elem` map toLower letrasUsadas
+                            then do
+                                limpiarPantalla
+                                putStrLn "¡Ya has usado esa letra!"
+                                jugarTurno palabra actual intentos letrasUsadas restoPalabras
+                            else if letraChar `elem` map toLower palabra
+                                then do
+                                    limpiarPantalla
+                                    let nuevaActual = revelarLetra palabra actual letraChar
+                                    let nuevasLetrasUsadas = letraChar : letrasUsadas
+                                    putStrLn $ "¡Correcto! La letra está en la palabra."
+                                    putStrLn $ "Palabra: " ++ nuevaActual
+                                    putStrLn $ "Intentos restantes: " ++ show intentos
+                                    let letrasIncorrectas = filter (\l -> not (l `elem` map toLower palabra)) nuevasLetrasUsadas
+                                    putStrLn $ "letras incorrectas: [" ++ intercalate ", " (map (:[]) letrasIncorrectas) ++ "]"
+                                    jugarTurno palabra nuevaActual intentos nuevasLetrasUsadas restoPalabras
+                                else do
+                                    limpiarPantalla
+                                    sonidoFallo
+                                    let nuevasLetrasUsadas = letraChar : letrasUsadas
+                                    putStrLn "¡Incorrecto! La letra no está en la palabra."
+                                    putStrLn $ "Palabra: " ++ actual
+                                    putStrLn $ "Intentos restantes: " ++ show (intentos - 1)
+                                    let letrasIncorrectas = filter (\l -> not (l `elem` map toLower palabra)) nuevasLetrasUsadas
+                                    putStrLn $ "letras incorrectas: [" ++ intercalate ", " (map (:[]) letrasIncorrectas) ++ "]"
+                                    jugarTurno palabra actual (intentos - 1) nuevasLetrasUsadas restoPalabras
 
 leerEstadisticas :: IO (Int, Int, Int)
 leerEstadisticas = do
