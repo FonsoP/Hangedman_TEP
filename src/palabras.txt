@@ -1,5 +1,5 @@
-Palabra 1
-Palabra 2
-Palabra 3
-Balatro
-Palabra 5
+HASKELL
+PROGRAMACION
+FUNCIONAL
+COMPUTADORA
+ALGORITMO
