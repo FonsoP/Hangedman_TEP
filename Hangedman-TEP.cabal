@@ -67,7 +67,7 @@ executable Hangedman-TEP
     -- other-extensions:
 
     -- Other library packages from which modules are imported.
-    build-depends:    base ^>=4.18.3.0, random, directory, process
+    build-depends:    base ^>=4.18.3.0, random, directory, process, ansi-terminal
 
     -- Directories containing source files.
     hs-source-dirs:   app
