@@ -8,6 +8,10 @@ import System.Info
 escribir :: String -> String
 escribir palabra = replicate (length palabra) '_'
 
+revelarLetra :: String -> String -> Char -> String
+revelarLetra palabra actual letra = 
+    zipWith (\p a -> if toLower p == toLower letra then p else a) palabra actual
+
 limpiarPantalla :: IO ()
 limpiarPantalla = do
     if os == "mingw32" || os == "win32"
@@ -31,28 +35,62 @@ jugarPartida :: IO ()
 jugarPartida = do
     limpiarPantalla
     -- lectura del archivo
-    handle <- openFile "src/palabras.txt" ReadMode
-
-    -- convertir el contenido a una lista de palabras
+    handle <- openFile "palabras.txt" ReadMode
     contents <- hGetContents handle
-    
-    -- crea un arreglo con las lineas del archivo
     let palabrasList = lines contents
+    let palabra = head palabrasList
+    let palabraOculta = escribir palabra
+    let intentos = 6
+    let letrasUsadas = []
     
-    -- mostrar en pantalla la palabra en minusculas
-    putStrLn "Dí una letra: "
+    putStrLn "¡Bienvenido al juego del ahorcado!"
+    putStrLn $ "La palabra tiene " ++ show (length palabra) ++ " letras"
+    putStrLn $ "Palabra: " ++ palabraOculta
+    putStrLn $ "Intentos restantes: " ++ show intentos
     
-    -- Lee la letra ingresada por el usuario
-    letra <- getLine
+    jugarTurno palabra palabraOculta intentos letrasUsadas
 
-    -- Muestra todas las palabras del archivo
-    putStr $ unlines palabrasList 
-
-    -- Muestra la primera palabra del archivo oculta con guiones bajos
-    putStr $ escribir(head palabrasList)
-
-    -- Muestra la letra que ingresó el usuario
-    putStr letra
+jugarTurno :: String -> String -> Int -> [Char] -> IO ()
+jugarTurno palabra actual intentos letrasUsadas = do
+    if intentos <= 0
+        then do
+            putStrLn "\n¡Te has quedado sin intentos!"
+            putStrLn $ "La palabra era: " ++ palabra
+            putStrLn "Presione Enter para continuar..."
+            _ <- getLine
+            return ()
+        else if actual == palabra
+            then do
+                putStrLn "\n¡Felicidades! ¡Has ganado!"
+                putStrLn $ "La palabra era: " ++ palabra
+                putStrLn "Presione Enter para continuar..."
+                _ <- getLine
+                return ()
+            else do
+                putStrLn "\nDí una letra: "
+                letra <- getLine
+                let letraChar = toLower (head letra)
+                
+                if letraChar `elem` map toLower letrasUsadas
+                    then do
+                        putStrLn "¡Ya has usado esa letra!"
+                        jugarTurno palabra actual intentos letrasUsadas
+                    else if letraChar `elem` map toLower palabra
+                        then do
+                            let nuevaActual = revelarLetra palabra actual letraChar
+                            let nuevasLetrasUsadas = letraChar : letrasUsadas
+                            putStrLn $ "¡Correcto! La letra está en la palabra."
+                            putStrLn $ "Palabra: " ++ nuevaActual
+                            putStrLn $ "Intentos restantes: " ++ show intentos
+                            putStrLn $ "Letras usadas: " ++ show nuevasLetrasUsadas
+                            jugarTurno palabra nuevaActual intentos nuevasLetrasUsadas
+                        else do
+                            let nuevasLetrasUsadas = letraChar : letrasUsadas
+                            putStrLn "¡Incorrecto! La letra no está en la palabra."
+                            putStrLn $ "Palabra: " ++ actual
+                            putStrLn $ "Intentos restantes: " ++ show (intentos - 1)
+                            putStrLn $ "Letras usadas: " ++ show nuevasLetrasUsadas
+                            jugarTurno palabra actual (intentos - 1) nuevasLetrasUsadas
 
 leerEstadisticas :: IO (Int, Int, Int)
 leerEstadisticas = do
@@ -77,8 +115,6 @@ visualizarEstadisticas = do
     putStrLn $ "Total de partidas: " ++ show (ganadas + perdidas + abandonadas)
 
 main :: IO ()
--- MAIN --
-main :: IO ()
 main = do
     let loop = do
             mostrarMenu
@@ -102,7 +138,7 @@ main = do
                     return ()
                 _ -> do
                     limpiarPantalla
-                    putStrLn "Opción no válida. Por favor seleccione un número del 1 al 3."
+                    putStrLn "! Opción no válida. Por favor seleccione un número del 1 al 3."
                     putStrLn "Presione Enter para continuar..."
                     _ <- getLine
                     loop
