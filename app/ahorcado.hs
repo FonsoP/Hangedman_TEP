@@ -6,7 +6,7 @@ import System.Process
 import System.Info
 import GHC.Show (Show(show))
 import System.Random
-
+import System.Console.ANSI
 
 
 dibujarAhorcado :: Int -> IO ()
@@ -127,11 +127,13 @@ jugarTurno palabra actual intentos letrasUsadas  = do
     dibujarAhorcado intentos
     if intentos <= 0
         then do
+            setSGR [SetColor Foreground Vivid Red]
             putStrLn "\n¡Te has quedado sin intentos!"
             putStrLn $ "La palabra era: " ++ palabra
-      
+            
             putStrLn "Presione Enter para volver al menú principal..."
             _ <- getLine
+            setSGR [Reset]
             return ()
         else if actual == palabra
             then do
@@ -225,4 +227,3 @@ main = do
                     loop
     loop
 
-    
