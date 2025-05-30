@@ -5,9 +5,67 @@ import System.Directory
 import System.Process
 import System.Info
 import GHC.Show (Show(show))
-import System.Random
+import Control.Concurrent (threadDelay)
 
+escribir :: String -> String
+escribir palabra = replicate (length palabra) '_'
 
+revelarLetra :: String -> String -> Char -> String
+revelarLetra palabra actual letra = 
+    zipWith (\p a -> if toLower p == toLower letra then p else a) palabra actual
+
+limpiarPantalla :: IO ()
+limpiarPantalla = do
+    if os == "mingw32" || os == "win32"
+        then do
+            _ <- system "cls"
+            return ()
+        else do
+            _ <- system "clear"
+            return ()
+
+mostrarMenu :: IO ()
+mostrarMenu = do
+    limpiarPantalla
+    putStrLn "----- EL AHORCADO: -----"
+    putStrLn "1. Jugar Partida"
+    putStrLn "2. Visualizar Estadísticas"
+    putStrLn "3. Salir del Programa"
+    putStrLn "Selecciona una opcion (1-3):"
+
+jugarPartida :: IO ()
+jugarPartida = do
+    limpiarPantalla
+    -- lectura del archivo
+    handle <- openFile "app/palabras.txt" ReadMode
+    contents <- hGetContents handle
+    let palabrasList = lines contents
+    indrndm <- randomRIO (0, length palabrasList - 1) :: IO Int
+
+    palabraElegida <- return $ map toUpper (palabrasList !! indrndm)
+    jugarConPalabras palabraElegida
+
+jugarConPalabras :: String -> IO ()
+
+jugarConPalabras palabra = do
+    let palabraOculta = escribir palabra
+    let intentos = 6
+    let letrasUsadas = []
+    
+    putStrLn "¡Bienvenido al juego del ahorcado!"
+    putStrLn $ "La palabra tiene " ++ show (length palabra) ++ " letras"
+    putStrLn $ "Palabra: " ++ palabraOculta
+    putStrLn $ "Intentos restantes: " ++ show intentos
+    
+    jugarTurno palabra palabraOculta intentos letrasUsadas 
+
+actualizarEstadisticas :: Bool -> IO ()
+actualizarEstadisticas esVictoria = do
+    (ganadas, perdidas, abandonadas) <- leerEstadisticas
+    let (ganadas', perdidas', abandonadas') = if esVictoria 
+                                            then (ganadas + 1, perdidas, abandonadas)
+                                            else (ganadas, perdidas + 1, abandonadas)
+    writeFile "estadisticas.txt" $ unlines $ map show [ganadas', perdidas', abandonadas']
 
 dibujarAhorcado :: Int -> IO ()
 dibujarAhorcado intentos = do
@@ -70,60 +128,16 @@ dibujarAhorcado intentos = do
             putStrLn "========="
         _ -> return ()
 
-escribir :: String -> String
-escribir palabra = replicate (length palabra) '_'
+-- Sonidos por consola
+sonidoFallo :: IO ()
+sonidoFallo = putStr "\a" >> hFlush stdout
 
-revelarLetra :: String -> String -> Char -> String
-revelarLetra palabra actual letra = 
-    zipWith (\p a -> if toLower p == toLower letra then p else a) palabra actual
+-- Función auxiliar para validar que la entrada sea una sola letra
+validarEntrada :: String -> Bool
+validarEntrada entrada = length entrada == 1 && isLetter (head entrada)
 
-limpiarPantalla :: IO ()
-limpiarPantalla = do
-    if os == "mingw32" || os == "win32"
-        then do
-            _ <- system "cls"
-            return ()
-        else do
-            _ <- system "clear"
-            return ()
-
-mostrarMenu :: IO ()
-mostrarMenu = do
-    limpiarPantalla
-    putStrLn "----- EL AHORCADO: -----"
-    putStrLn "1. Jugar Partida"
-    putStrLn "2. Visualizar Estadísticas"
-    putStrLn "3. Salir del Programa"
-    putStrLn "Selecciona una opcion (1-3):"
-
-jugarPartida :: IO ()
-jugarPartida = do
-    limpiarPantalla
-    -- lectura del archivo
-    handle <- openFile "app/palabras.txt" ReadMode
-    contents <- hGetContents handle
-    let palabrasList = lines contents
-    indrndm <- randomRIO (0, length palabrasList - 1) :: IO Int
-
-    palabraElegida <- return $ map toUpper (palabrasList !! indrndm)
-    jugarConPalabras palabraElegida
-
-jugarConPalabras :: String -> IO ()
-
-jugarConPalabras palabra = do
-    let palabraOculta = escribir palabra
-    let intentos = 6
-    let letrasUsadas = []
-    
-    putStrLn "¡Bienvenido al juego del ahorcado!"
-    putStrLn $ "La palabra tiene " ++ show (length palabra) ++ " letras"
-    putStrLn $ "Palabra: " ++ palabraOculta
-    putStrLn $ "Intentos restantes: " ++ show intentos
-    
-    jugarTurno palabra palabraOculta intentos letrasUsadas 
-
-jugarTurno :: String -> String -> Int -> [Char]  -> IO ()
-jugarTurno palabra actual intentos letrasUsadas  = do
+jugarTurno :: String -> String -> Int -> [Char] -> [String] -> IO ()
+jugarTurno palabra actual intentos letrasUsadas restoPalabras = do
     dibujarAhorcado intentos
     if intentos <= 0
         then do
@@ -143,33 +157,40 @@ jugarTurno palabra actual intentos letrasUsadas  = do
             else do
                 putStrLn "\nDí una letra: "
                 letra <- getLine
-                let letraChar = toLower (head letra)
-                
-                if letraChar `elem` map toLower letrasUsadas
+                if not (validarEntrada letra)
                     then do
                         limpiarPantalla
-                        putStrLn "¡Ya has usado esa letra!"
-                        jugarTurno palabra actual intentos letrasUsadas 
-                    else if letraChar `elem` map toLower palabra
-                        then do
-                            limpiarPantalla
-                            let nuevaActual = revelarLetra palabra actual letraChar
-                            let nuevasLetrasUsadas = letraChar : letrasUsadas
-                            putStrLn $ "¡Correcto! La letra está en la palabra."
-                            putStrLn $ "Palabra: " ++ nuevaActual
-                            putStrLn $ "Intentos restantes: " ++ show intentos
-                            let letrasIncorrectas = filter (\l -> not (l `elem` map toLower palabra)) nuevasLetrasUsadas
-                            putStrLn $ "letras incorrectas: [" ++ intercalate ", " (map (:[]) letrasIncorrectas) ++ "]"
-                            jugarTurno palabra nuevaActual intentos nuevasLetrasUsadas 
-                        else do
-                            limpiarPantalla
-                            let nuevasLetrasUsadas = letraChar : letrasUsadas
-                            putStrLn "¡Incorrecto! La letra no está en la palabra."
-                            putStrLn $ "Palabra: " ++ actual
-                            putStrLn $ "Intentos restantes: " ++ show (intentos - 1)
-                            let letrasIncorrectas = filter (\l -> not (l `elem` map toLower palabra)) nuevasLetrasUsadas
-                            putStrLn $ "letras incorrectas: [" ++ intercalate ", " (map (:[]) letrasIncorrectas) ++ "]"
-                            jugarTurno palabra actual (intentos - 1) nuevasLetrasUsadas 
+                        putStrLn "Error: Por favor ingrese UNA SOLA letra válida."
+                        putStrLn "No se permiten números, espacios ni caracteres especiales."
+                        jugarTurno palabra actual intentos letrasUsadas restoPalabras
+                    else do
+                        let letraChar = toLower (head letra)
+                        if letraChar `elem` map toLower letrasUsadas
+                            then do
+                                limpiarPantalla
+                                putStrLn "¡Ya has usado esa letra!"
+                                jugarTurno palabra actual intentos letrasUsadas restoPalabras
+                            else if letraChar `elem` map toLower palabra
+                                then do
+                                    limpiarPantalla
+                                    let nuevaActual = revelarLetra palabra actual letraChar
+                                    let nuevasLetrasUsadas = letraChar : letrasUsadas
+                                    putStrLn $ "¡Correcto! La letra está en la palabra."
+                                    putStrLn $ "Palabra: " ++ nuevaActual
+                                    putStrLn $ "Intentos restantes: " ++ show intentos
+                                    let letrasIncorrectas = filter (\l -> not (l `elem` map toLower palabra)) nuevasLetrasUsadas
+                                    putStrLn $ "letras incorrectas: [" ++ intercalate ", " (map (:[]) letrasIncorrectas) ++ "]"
+                                    jugarTurno palabra nuevaActual intentos nuevasLetrasUsadas restoPalabras
+                                else do
+                                    limpiarPantalla
+                                    sonidoFallo
+                                    let nuevasLetrasUsadas = letraChar : letrasUsadas
+                                    putStrLn "¡Incorrecto! La letra no está en la palabra."
+                                    putStrLn $ "Palabra: " ++ actual
+                                    putStrLn $ "Intentos restantes: " ++ show (intentos - 1)
+                                    let letrasIncorrectas = filter (\l -> not (l `elem` map toLower palabra)) nuevasLetrasUsadas
+                                    putStrLn $ "letras incorrectas: [" ++ intercalate ", " (map (:[]) letrasIncorrectas) ++ "]"
+                                    jugarTurno palabra actual (intentos - 1) nuevasLetrasUsadas restoPalabras
 
 leerEstadisticas :: IO (Int, Int, Int)
 leerEstadisticas = do
