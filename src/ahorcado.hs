@@ -38,7 +38,15 @@ jugarPartida = do
     handle <- openFile "palabras.txt" ReadMode
     contents <- hGetContents handle
     let palabrasList = lines contents
-    let palabra = head palabrasList
+    jugarConPalabras palabrasList
+
+jugarConPalabras :: [String] -> IO ()
+jugarConPalabras [] = do
+    putStrLn "\n¡Has completado todas las palabras!"
+    putStrLn "Presione Enter para continuar..."
+    _ <- getLine
+    return ()
+jugarConPalabras (palabra:resto) = do
     let palabraOculta = escribir palabra
     let intentos = 6
     let letrasUsadas = []
@@ -48,24 +56,24 @@ jugarPartida = do
     putStrLn $ "Palabra: " ++ palabraOculta
     putStrLn $ "Intentos restantes: " ++ show intentos
     
-    jugarTurno palabra palabraOculta intentos letrasUsadas
+    jugarTurno palabra palabraOculta intentos letrasUsadas resto
 
-jugarTurno :: String -> String -> Int -> [Char] -> IO ()
-jugarTurno palabra actual intentos letrasUsadas = do
+jugarTurno :: String -> String -> Int -> [Char] -> [String] -> IO ()
+jugarTurno palabra actual intentos letrasUsadas restoPalabras = do
     if intentos <= 0
         then do
             putStrLn "\n¡Te has quedado sin intentos!"
             putStrLn $ "La palabra era: " ++ palabra
-            putStrLn "Presione Enter para continuar..."
+            putStrLn "Presione Enter para continuar con la siguiente palabra..."
             _ <- getLine
-            return ()
+            jugarConPalabras restoPalabras
         else if actual == palabra
             then do
                 putStrLn "\n¡Felicidades! ¡Has ganado!"
                 putStrLn $ "La palabra era: " ++ palabra
-                putStrLn "Presione Enter para continuar..."
+                putStrLn "Presione Enter para continuar con la siguiente palabra..."
                 _ <- getLine
-                return ()
+                jugarConPalabras restoPalabras
             else do
                 putStrLn "\nDí una letra: "
                 letra <- getLine
@@ -74,7 +82,7 @@ jugarTurno palabra actual intentos letrasUsadas = do
                 if letraChar `elem` map toLower letrasUsadas
                     then do
                         putStrLn "¡Ya has usado esa letra!"
-                        jugarTurno palabra actual intentos letrasUsadas
+                        jugarTurno palabra actual intentos letrasUsadas restoPalabras
                     else if letraChar `elem` map toLower palabra
                         then do
                             let nuevaActual = revelarLetra palabra actual letraChar
@@ -83,14 +91,14 @@ jugarTurno palabra actual intentos letrasUsadas = do
                             putStrLn $ "Palabra: " ++ nuevaActual
                             putStrLn $ "Intentos restantes: " ++ show intentos
                             putStrLn $ "Letras usadas: " ++ show nuevasLetrasUsadas
-                            jugarTurno palabra nuevaActual intentos nuevasLetrasUsadas
+                            jugarTurno palabra nuevaActual intentos nuevasLetrasUsadas restoPalabras
                         else do
                             let nuevasLetrasUsadas = letraChar : letrasUsadas
                             putStrLn "¡Incorrecto! La letra no está en la palabra."
                             putStrLn $ "Palabra: " ++ actual
                             putStrLn $ "Intentos restantes: " ++ show (intentos - 1)
                             putStrLn $ "Letras usadas: " ++ show nuevasLetrasUsadas
-                            jugarTurno palabra actual (intentos - 1) nuevasLetrasUsadas
+                            jugarTurno palabra actual (intentos - 1) nuevasLetrasUsadas restoPalabras
 
 leerEstadisticas :: IO (Int, Int, Int)
 leerEstadisticas = do
