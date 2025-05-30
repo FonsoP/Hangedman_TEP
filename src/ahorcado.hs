@@ -4,6 +4,7 @@ import Data.List
 import System.Directory
 import System.Process
 import System.Info
+import GHC.Show (Show(show))
 
 escribir :: String -> String
 escribir palabra = replicate (length palabra) '_'
@@ -75,6 +76,7 @@ jugarTurno palabra actual intentos letrasUsadas restoPalabras = do
                 _ <- getLine
                 jugarConPalabras restoPalabras
             else do
+                putStrLn "\n tu numero de intentos disponibles es: " ++ show intentos
                 putStrLn "\nDí una letra: "
                 letra <- getLine
                 let letraChar = toLower (head letra)
