@@ -74,7 +74,8 @@ jugarTurno palabra actual intentos letrasUsadas  = do
             then do
                 putStrLn "\n¡Felicidades! ¡Has ganado!"
                 putStrLn $ "La palabra era: " ++ palabra
-
+                _ <- getLine
+                return ()
                 
             else do
                 putStrLn "\nDí una letra: "
@@ -141,8 +142,6 @@ main = do
             case opcion of
                 "1" -> do
                     jugarPartida
-                    putStrLn "\nPresione Enter para continuar..."
-                    _ <- getLine
                     loop
                 "2" -> do
                     visualizarEstadisticas
