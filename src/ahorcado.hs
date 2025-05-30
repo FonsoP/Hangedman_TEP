@@ -43,10 +43,27 @@ jugarPartida = do
     -- Muestra la letra que ingresó el usuario
     putStr letra
 
+leerEstadisticas :: IO (Int, Int, Int)
+leerEstadisticas = do
+    existe <- doesFileExist "src/estadisticas.txt"
+    if existe
+        then do
+            contenido <- readFile "src/estadisticas.txt"
+            let lineas = lines contenido
+            if length lineas >= 3
+                then return (read (lineas !! 0), read (lineas !! 1), read (lineas !! 2))
+                else return (0, 0, 0)
+        else return (0, 0, 0)
+
 visualizarEstadisticas :: IO ()
 visualizarEstadisticas = do
     clearScreen
-    putStrLn "--- ESTADÍSTICAS ---"
+    putStrLn "=== ESTADÍSTICAS DEL JUEGO ==="
+    (ganadas, perdidas, abandonadas) <- leerEstadisticas
+    putStrLn $ "Partidas ganadas: " ++ show ganadas
+    putStrLn $ "Partidas perdidas: " ++ show perdidas
+    putStrLn $ "Partidas abandonadas: " ++ show abandonadas
+    putStrLn $ "Total de partidas: " ++ show (ganadas + perdidas + abandonadas)
 
 -- MAIN --
 main = do
@@ -66,7 +83,7 @@ main = do
                 loop
             "3" -> putStrLn "Gracias por jugar!"
             _ -> do
-                putStrLn "Opción no válida. Por favor seleccione un número del 1 al 3."
+                putStrLn "\n❌ Opción no válida. Por favor seleccione un número del 1 al 3."
                 putStrLn "Presione Enter para continuar..."
                 _ <- getLine
                 loop
