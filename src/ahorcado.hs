@@ -4,18 +4,32 @@ import Data.List
 import System.Directory
 import System.Console.ANSI
 
+
+
 -- crea la palabra cubierta con guiones bajos
 cubrir :: String -> String
 cubrir palabra = take (length palabra) (repeat '_')
 
-descubrir :: (Int, String, Char) -> String
-descubrir (indice, cubierta, letra) =  take indice cubierta ++ [letra] ++ drop (indice + 1) cubierta;
-        
 
-buscar:: (String, Char) -> Maybe Int
-buscar(palabra, letra) = elemIndex letra palabra
+
+-- Adivina la letra y devuelve la palabra con la letra descubierta
+descubrir :: ([Int], String, Char) -> String
+descubrir(indice, cubierta, letra) = descubrir(indice, take indice cubierta ++ [letra] ++ drop (indice + 1) cubierta,letra);
+descubrir (0, cubierta, letra) = ""
+
+
+-- Busca el índice de una letra en la palabra
+buscar:: (String, Char) -> [int]
+buscar(palabra, letra) =  
+    [i | (i, sufijo) <- zip [0..] (tails cadena), subcadena `isPrefixOf` sufijo]
     
 
+
+encontrarOcurrencias :: String -> String -> [Int]
+encontrarOcurrencias subcadena cadena =
+    [i | (i, sufijo) <- zip [0..] (tails cadena), subcadena `isPrefixOf` sufijo]
+
+--muestra la letra descubierta
 procesarLetra :: String -> String -> Char -> IO ()
 procesarLetra palabra cubierta letra = 
     case buscar (palabra, letra) of
@@ -81,6 +95,7 @@ visualizarEstadisticas = do
     putStrLn $ "Total de partidas: " ++ show (ganadas + perdidas + abandonadas)
 
 -- MAIN --
+main :: IO ()
 main = do
 
   -- lectura del archivo
@@ -120,28 +135,7 @@ main = do
     procesarLetra palabraElegida cubierta (head letra)
 
 
-    let loop = do
-        mostrarMenu
-        opcion <- getLine
-        case opcion of
-            "1" -> do
-                jugarPartida
-                putStrLn "\nPresione Enter para continuar..."
-                _ <- getLine
-                loop
-            "2" -> do
-                visualizarEstadisticas
-                putStrLn "\nPresione Enter para continuar..."
-                _ <- getLine
-                loop
-            "3" -> putStrLn "Gracias por jugar!"
-            _ -> do
-                putStrLn "\n❌ Opción no válida. Por favor seleccione un número del 1 al 3."
-                putStrLn "Presione Enter para continuar..."
-                _ <- getLine
-                loop
-    loop
 
 
 
-  
+
