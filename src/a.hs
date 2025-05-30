@@ -8,22 +8,54 @@ import System.Directory
 cubrir :: String -> String
 cubrir palabra = take (length palabra) (repeat '_')
 
+-- descubre la letra en la palabra cubierta
 descubrir :: (Int, String, Char) -> String
 descubrir (indice, cubierta, letra) =  take indice cubierta ++ [letra] ++ drop (indice + 1) cubierta;
         
+-- busca la letra en la palabra y devuelve los indices donde se encuentra
+buscar :: Char -> String -> [Int]
+buscar letra palabra =
+    [i | (i, c) <- zip [0..] palabra, c == letra]
 
-buscar:: (String, Char) -> Maybe Int
-buscar(palabra, letra) = elemIndex letra palabra
-    
+procesarLetra :: String -> String -> Char -> String
+procesarLetra palabra cubierta letra =
+    if null (buscar letra palabra) then
+        cubierta
+    else
+        foldl (\acc idx -> descubrir (idx, acc, letra)) cubierta (buscar letra palabra)
+        
 
-procesarLetra :: String -> String -> Char -> IO ()
-procesarLetra palabra cubierta letra = 
-    case buscar (palabra, letra) of
-        Just idx -> putStrLn $ descubrir (idx, cubierta, letra)
-        Nothing  -> putStrLn "La letra no está en la palabra."
 
-main :: IO ()
 
+jugar :: Int -> String -> String -> IO ()
+jugar intentos palabraElegida cubierta = do
+    putStrLn "Palabra cubierta: "
+    putStrLn cubierta
+
+    putStrLn "Dí una letra: "
+    -- leer de pantalla
+    letra <- getLine
+
+    let nuevaCubierta = procesarLetra palabraElegida cubierta (head letra)
+ 
+    if nuevaCubierta == cubierta then do
+        putStrLn "Letra incorrecta."
+    else do
+        putStrLn "Letra correcta."
+
+    if nuevaCubierta == palabraElegida then do
+        putStrLn "¡Felicidades! Has adivinado la palabra."
+    else 
+
+        if intentos > 1 then do
+            putStrLn $ "Intentos restantes: " ++ show (intentos - 1)
+            jugar (intentos - 1) palabraElegida nuevaCubierta
+        else do
+            putStrLn "Has perdido, no te quedan intentos."
+
+
+
+main ::IO ()
 main = do
     
     -- lectura del archivo
@@ -41,15 +73,12 @@ main = do
     let palabraElegida =  palabrasList !! 3
 
     let cubierta =  cubrir palabraElegida
+    let intentos = length palabraElegida + 2
 
-    let intentos = length palabraElegida
+    jugar intentos palabraElegida cubierta
 
-    putStrLn "Palabra cubierta: "
-    putStrLn cubierta
+    -- cerrar el archivo
+    hClose handle
 
-    putStrLn "Dí una letra: "
-    --leer de pantalla
-    letra <- getLine
 
-    procesarLetra palabraElegida cubierta (head letra)
 
